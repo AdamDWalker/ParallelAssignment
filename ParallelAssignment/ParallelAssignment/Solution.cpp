@@ -12,6 +12,36 @@
 
 #include "Utils.h"
 
+///
+/// Read the file into an array using fscanf
+/// http://www.cplusplus.com/reference/cstdio/fscanf/
+/// http://www.cplusplus.com/reference/cstdio/FILE/ 
+///
+float* readFile(char* filename, int size)
+{
+	float* data = new float[size];
+	FILE * file;
+	
+	try
+	{
+		file = fopen(filename, "r");	
+		std::cout << "Reading file now..." << std::endl;
+		for (int i = 0; i < size; i++)
+		{
+			std::cout << i << std::endl;
+			fscanf(file, "%s %f %f %f %f %f", &data[i]);
+		}
+	}
+	catch(exception e)
+	{
+		std::cout << "Error reading in file -- " << e.what() << std::endl;
+	}
+
+	fclose(file);
+	return data;
+}
+
+
 void print_help() {
 	std::cerr << "Application usage:" << std::endl;
 
@@ -32,6 +62,8 @@ int main(int argc, char **argv) {
 		else if (strcmp(argv[i], "-l") == 0) { std::cout << ListPlatformsDevices() << std::endl; }
 		else if (strcmp(argv[i], "-h") == 0) { print_help(); }
 	}
+
+	float* data = readFile("../../temp_lincolnshire_short.txt", 18000);
 
 	//detect any potential exceptions
 	try {
