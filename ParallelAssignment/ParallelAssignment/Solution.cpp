@@ -24,9 +24,9 @@ float* readFile(char* filename, int size)
 	
 	try
 	{
+		file = fopen(filename, "r");
 		if (file != nullptr)
 		{
-			file = fopen(filename, "r");	
 			std::cout << "Reading file now..." << std::endl;
 			for (int i = 0; i < size; i++)
 			{
