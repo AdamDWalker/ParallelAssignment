@@ -24,19 +24,26 @@ float* readFile(char* filename, int size)
 	
 	try
 	{
-		file = fopen(filename, "r");	
-		std::cout << "Reading file now..." << std::endl;
-		for (int i = 0; i < size; i++)
+		if (file != nullptr)
 		{
-			fscanf(file, "*%s %f %f %f %f %f", &data[i]); // The asterisk prevents the string from being stored. And therefore prevents an access violation
+			file = fopen(filename, "r");	
+			std::cout << "Reading file now..." << std::endl;
+			for (int i = 0; i < size; i++)
+			{
+				fscanf(file, "*%s %f %f %f %f %f", &data[i]); // The asterisk prevents the string from being stored. And therefore prevents an access violation
+			}
+
+			fclose(file);
+		}
+		else
+		{
+			std::cout << "Unable to read file. No file found at location: " << filename << std::endl;
 		}
 	}
-	catch(exception e)
+	catch(const char* err)
 	{
-		std::cout << "Error reading in file -- " << e.what() << std::endl;
-}	
-
-	fclose(file);
+		std::cout << "Error reading in file -- " << err << std::endl;
+	}	
 	return data;
 }
 
