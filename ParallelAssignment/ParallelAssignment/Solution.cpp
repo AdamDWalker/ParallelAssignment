@@ -28,14 +28,13 @@ float* readFile(char* filename, int size)
 		std::cout << "Reading file now..." << std::endl;
 		for (int i = 0; i < size; i++)
 		{
-			std::cout << i << std::endl;
-			fscanf(file, "%s %f %f %f %f %f", &data[i]);
+			fscanf(file, "*%s %f %f %f %f %f", &data[i]); // The asterisk prevents the string from being stored. And therefore prevents an access violation
 		}
 	}
 	catch(exception e)
 	{
 		std::cout << "Error reading in file -- " << e.what() << std::endl;
-	}
+}	
 
 	fclose(file);
 	return data;
