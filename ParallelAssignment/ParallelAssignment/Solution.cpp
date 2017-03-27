@@ -65,12 +65,8 @@ int main(int argc, char **argv) {
 	}
 
 	// C:/Users/Computing/Documents/GitHub/ParallelAssignment/ParallelAssignment/x64/Debug/
-	vector<int>* data = readFile("C:/Users/Computing/Documents/GitHub/ParallelAssignment/ParallelAssignment/x64/Debug/temp_lincolnshire_short.txt");
+	vector<int>* data = readFile("C:/Users/Computing/Documents/GitHub/ParallelAssignment/ParallelAssignment/x64/Debug/temp_lincolnshire.txt");
 	std::cout << "Reading file complete" << std::endl;
-
-	//std::cout << *data << std::endl;
-
-	system("pause");
 
 	//detect any potential exceptions
 	try {
@@ -170,6 +166,7 @@ int main(int argc, char **argv) {
 		kernel_3.setArg(0, buffer_A);
 		kernel_3.setArg(1, buffer_D);
 		kernel_3.setArg(2, cl::Local(local_size * sizeof(mytype)));
+
 
 		//call all kernels in a sequence
 		queue.enqueueNDRangeKernel(kernel_1, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
