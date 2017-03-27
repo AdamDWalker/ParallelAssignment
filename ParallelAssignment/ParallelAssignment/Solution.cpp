@@ -182,7 +182,8 @@ int main(int argc, char **argv) {
 
 		//std::cout << "Data = " << *data << std::endl;
 		std::cout << "Min = " << (float)B[0] / 100.0f << std::endl;
-		std::cout << "Max = " << (float)D[0] / 100.0f << std::endl;
+		std::cout << "Max = " << (float)C[0] / 100.0f << std::endl;
+		std::cout << "Mean = " << ((float)D[0] / data->size()) / 100.0f << std::endl;
 
 		system("pause");
 
