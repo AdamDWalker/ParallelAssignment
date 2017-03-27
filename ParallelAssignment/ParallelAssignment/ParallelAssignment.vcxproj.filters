@@ -18,4 +18,9 @@
       <Filter>OpenCL Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\temp_lincolnshire.txt" />
+    <Text Include="..\..\temp_lincolnshire_short.txt" />
+    <Text Include="..\..\temp_lincolnshire_short_test.txt" />
+  </ItemGroup>
 </Project>

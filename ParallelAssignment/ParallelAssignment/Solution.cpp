@@ -67,9 +67,9 @@ int main(int argc, char **argv) {
 
 	try
 	{
-		vector<float>* data = readFile("C:/Users/Computing/Documents/GitHub/ParallelAssignment/ParallelAssignment/x64/Debug/temp_lincolnshire_short_test.txt");
-
-		for (int i = 0; i < 10; i++)
+		vector<float>* data = readFile("temp_lincolnshire_short_test.txt");
+		std::cout << "Reading file complete" << std::endl;
+		for (size_t i = 0; i < 10; i++)
 		{
 			std::cout << (*data)[i] << std::endl;
 		}
@@ -79,6 +79,7 @@ int main(int argc, char **argv) {
 		std::cout << "Error cannot do the thing: " << e.what() << std::endl;
 	}
 
+	system("pause");
 
 	//detect any potential exceptions
 	try {

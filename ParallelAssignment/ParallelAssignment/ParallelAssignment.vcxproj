@@ -187,5 +187,16 @@
   <ItemGroup>
     <ClCompile Include="Solution.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\temp_lincolnshire.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\temp_lincolnshire_short.txt" >
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\temp_lincolnshire_short_test.txt" >
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
