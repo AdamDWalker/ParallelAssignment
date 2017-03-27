@@ -12,38 +12,34 @@
 
 #include "Utils.h"
 
-///
-/// Read the file into an array using fscanf
-/// http://www.cplusplus.com/reference/cstdio/fscanf/
-/// http://www.cplusplus.com/reference/cstdio/FILE/ 
-///
-float* readFile(char* filename, int size)
-{
-	float* data = new float[size];
-	FILE * file;
-	
-	try
-	{
-		file = fopen(filename, "r");
-		if (file != nullptr)
-		{
-			std::cout << "Reading file now..." << std::endl;
-			for (int i = 0; i < size; i++)
-			{
-				fscanf(file, "*%s %f %f %f %f %f", &data[i]); // The asterisk prevents the string from being stored. And therefore prevents an access violation
-			}
 
-			fclose(file);
-		}
-		else
-		{
-			std::cout << "Unable to read file. No file found at location: " << filename << std::endl;
-		}
-	}
-	catch(const char* err)
+vector<float>* readFile(std::string filename)
+{
+	vector<float>* data = new vector<float>;
+	ifstream file (filename);
+	string string;
+	int spaceCount = 0;
+
+	while (std::getline(file, string))
 	{
-		std::cout << "Error reading in file -- " << err << std::endl;
-	}	
+		std::string tempString;
+		for (int i = 0; i < string.size(); i++)
+		{
+			if (spaceCount < 5)
+			{
+				if (string[i] == ' ')
+				{
+					spaceCount++;
+				}
+			}	
+			else
+			{
+				tempString += string[i];
+			}
+		}
+		data->push_back(std::stof(tempString));
+		spaceCount = 0;
+	}
 	return data;
 }
 
@@ -69,7 +65,20 @@ int main(int argc, char **argv) {
 		else if (strcmp(argv[i], "-h") == 0) { print_help(); }
 	}
 
-	float* data = readFile("../../temp_lincolnshire_short.txt", 18000);
+	try
+	{
+		vector<float>* data = readFile("C:/Users/Computing/Documents/GitHub/ParallelAssignment/ParallelAssignment/x64/Debug/temp_lincolnshire_short_test.txt");
+
+		for (int i = 0; i < 10; i++)
+		{
+			std::cout << (*data)[i] << std::endl;
+		}
+	}
+	catch (exception e)
+	{
+		std::cout << "Error cannot do the thing: " << e.what() << std::endl;
+	}
+
 
 	//detect any potential exceptions
 	try {
