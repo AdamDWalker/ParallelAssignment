@@ -6,7 +6,7 @@ __kernel void find_min_val(__global const int* A, __global int* B, __local int* 
 	int lid = get_local_id(0);
 	int N = get_local_size(0);
 
-	printf("Value of A = %i\n",A[id]);
+	//printf("[Min] Value of A = %i\n",A[id]);
 
 	//cache all N values from global memory to local memory
 	scratch[lid] = A[id];
@@ -17,7 +17,7 @@ __kernel void find_min_val(__global const int* A, __global int* B, __local int* 
 	{
 		if (!(lid % (i * 2)) && ((lid + i) < N)) 
 			scratch[lid] = (scratch[lid] < scratch[lid + i]) ? scratch[lid] : scratch[lid + i];
-			printf("Comparing: %i  and   %i\n", scratch[lid], scratch[lid + i] );
+			//printf("[Min] Comparing: %i  and   %i\n", scratch[lid], scratch[lid + i] );
 		barrier(CLK_LOCAL_MEM_FENCE);
 	}
 

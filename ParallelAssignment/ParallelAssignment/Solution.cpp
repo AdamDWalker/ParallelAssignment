@@ -65,10 +65,10 @@ int main(int argc, char **argv) {
 	}
 
 	// C:/Users/Computing/Documents/GitHub/ParallelAssignment/ParallelAssignment/x64/Debug/
-	vector<int>* data = readFile("C:/Users/Computing/Documents/GitHub/ParallelAssignment/ParallelAssignment/x64/Debug/temp_lincolnshire_short_test.txt");
+	vector<int>* data = readFile("C:/Users/Computing/Documents/GitHub/ParallelAssignment/ParallelAssignment/x64/Debug/temp_lincolnshire_short.txt");
 	std::cout << "Reading file complete" << std::endl;
 
-	std::cout << *data << std::endl;
+	//std::cout << *data << std::endl;
 
 	system("pause");
 
@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
 		cl::Buffer buffer_B(context, CL_MEM_READ_WRITE, output_size);
 
 		//Part 5 - device operations
-		std::cout << "Data - " << &data << std::endl;
+		//std::cout << "Data - " << &data << std::endl;
 		//5.1 copy array A to and initialise other arrays on device memory
 		queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, input_size, &(*data)[0]);
 		queue.enqueueFillBuffer(buffer_B, 0, 0, output_size);//zero B buffer on device memory
@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
 		//5.3 Copy the result from device to host
 		queue.enqueueReadBuffer(buffer_B, CL_TRUE, 0, output_size, &B[0]);
 
-		std::cout << "Data = " << *data << std::endl;
+		//std::cout << "Data = " << *data << std::endl;
 		std::cout << "Min = " << B[0] / 100 << std::endl;
 
 		system("pause");
