@@ -131,15 +131,16 @@ int main(int argc, char **argv) {
 		//host - output
 		std::vector<mytype> B(input_elements);
 		size_t output_size = B.size()*sizeof(mytype);//size in bytes
-
+		
+		std::vector<mytype> C(input_elements);
 		std::vector<mytype> D(input_elements);
 
 
 		//device - buffers
 		cl::Buffer buffer_A(context, CL_MEM_READ_ONLY, input_size);
-		cl::Buffer buffer_B(context, CL_MEM_READ_WRITE, output_size);
 
-		cl::Buffer buffer_C(context, CL_MEM_READ_ONLY, input_size);
+		cl::Buffer buffer_B(context, CL_MEM_READ_WRITE, output_size);
+		cl::Buffer buffer_C(context, CL_MEM_READ_WRITE, output_size);
 		cl::Buffer buffer_D(context, CL_MEM_READ_WRITE, output_size);
 
 
@@ -147,9 +148,9 @@ int main(int argc, char **argv) {
 		//std::cout << "Data - " << &data << std::endl;
 		//5.1 copy array A to and initialise other arrays on device memory
 		queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, input_size, &(*data)[0]);
-		queue.enqueueFillBuffer(buffer_B, 0, 0, output_size);//zero B buffer on device memory
 
-		queue.enqueueWriteBuffer(buffer_C, CL_TRUE, 0, input_size, &(*data)[0]);
+		queue.enqueueFillBuffer(buffer_B, 0, 0, output_size);//zero B buffer on device memory
+		queue.enqueueFillBuffer(buffer_C, 0, 0, output_size);
 		queue.enqueueFillBuffer(buffer_D, 0, 0, output_size);
 
 		//5.2 Setup and execute all kernels (i.e. device code)
@@ -159,18 +160,24 @@ int main(int argc, char **argv) {
 		kernel_1.setArg(2, cl::Local(local_size*sizeof(mytype)));//local memory size
 
 		cl::Kernel kernel_2 = cl::Kernel(program, "find_max_val");
-		kernel_2.setArg(0, buffer_C);
-		kernel_2.setArg(1, buffer_D);
+		kernel_2.setArg(0, buffer_A);
+		kernel_2.setArg(1, buffer_C);
 		kernel_2.setArg(2, cl::Local(local_size * sizeof(mytype)));
+
+		cl::Kernel kernel_3 = cl::Kernel(program, "find_mean_val");
+		kernel_3.setArg(0, buffer_A);
+		kernel_3.setArg(1, buffer_D);
+		kernel_3.setArg(2, cl::Local(local_size * sizeof(mytype)));
 
 		//call all kernels in a sequence
 		queue.enqueueNDRangeKernel(kernel_1, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
-
 		queue.enqueueNDRangeKernel(kernel_2, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
+		queue.enqueueNDRangeKernel(kernel_3, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
 
 
 		//5.3 Copy the result from device to host
 		queue.enqueueReadBuffer(buffer_B, CL_TRUE, 0, output_size, &B[0]);
+		queue.enqueueReadBuffer(buffer_C, CL_TRUE, 0, output_size, &C[0]);
 		queue.enqueueReadBuffer(buffer_D, CL_TRUE, 0, output_size, &D[0]);
 
 		//std::cout << "Data = " << *data << std::endl;
