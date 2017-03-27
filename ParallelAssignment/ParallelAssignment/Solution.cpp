@@ -13,9 +13,9 @@
 #include "Utils.h"
 
 
-vector<float>* readFile(std::string filename)
+vector<int>* readFile(std::string filename)
 {
-	vector<float>* data = new vector<float>;
+	vector<int>* data = new vector<int>;
 	ifstream file (filename);
 	string string;
 	int spaceCount = 0;
@@ -37,12 +37,11 @@ vector<float>* readFile(std::string filename)
 				tempString += string[i];
 			}
 		}
-		data->push_back(std::stof(tempString));
+		data->push_back(std::stof(tempString) * 100);
 		spaceCount = 0;
 	}
 	return data;
 }
-
 
 void print_help() {
 	std::cerr << "Application usage:" << std::endl;
@@ -65,15 +64,11 @@ int main(int argc, char **argv) {
 		else if (strcmp(argv[i], "-h") == 0) { print_help(); }
 	}
 
-	try
-	{
-		vector<float>* data = readFile("temp_lincolnshire_short.txt");
-		std::cout << "Reading file complete" << std::endl;
-	}
-	catch (exception e)
-	{
-		std::cout << "Error cannot do the thing: " << e.what() << std::endl;
-	}
+	// C:/Users/Computing/Documents/GitHub/ParallelAssignment/ParallelAssignment/x64/Debug/
+	vector<int>* data = readFile("temp_lincolnshire_short_test.txt");
+	std::cout << "Reading file complete" << std::endl;
+
+
 
 	system("pause");
 
@@ -111,14 +106,14 @@ int main(int argc, char **argv) {
 
 		//Part 4 - memory allocation
 		//host - input
-		std::vector<mytype> A(10, 1);//allocate 10 elements with an initial value 1 - their sum is 10 so it should be easy to check the results!
+		std::vector<mytype> A = {10, 2, 3, 4, 5, 6, 7, 8, 9 , 35};//allocate 10 elements with an initial value 1 - their sum is 10 so it should be easy to check the results!
 
 		//the following part adjusts the length of the input vector so it can be run for a specific workgroup size
 		//if the total input length is divisible by the workgroup size
 		//this makes the code more efficient
 		size_t local_size = 10;
 
-		size_t padding_size = A.size() % local_size;
+		size_t padding_size = data->size() % local_size;
 
 		//if the input vector is not a multiple of the local_size
 		//insert additional neutral elements (0 for addition) so that the total will not be affected
@@ -126,11 +121,11 @@ int main(int argc, char **argv) {
 			//create an extra vector with neutral values
 			std::vector<int> A_ext(local_size-padding_size, 0);
 			//append that extra vector to our input
-			A.insert(A.end(), A_ext.begin(), A_ext.end());
+			data->insert(data->end(), A_ext.begin(), A_ext.end());
 		}
 
-		size_t input_elements = A.size();//number of input elements
-		size_t input_size = A.size()*sizeof(mytype);//size in bytes
+		size_t input_elements = data->size();//number of input elements
+		size_t input_size = data->size()*sizeof(mytype);//size in bytes
 		size_t nr_groups = input_elements / local_size;
 
 		//host - output
@@ -144,14 +139,14 @@ int main(int argc, char **argv) {
 		//Part 5 - device operations
 
 		//5.1 copy array A to and initialise other arrays on device memory
-		queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, input_size, &A[0]);
+		queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, input_size, &data[0]);
 		queue.enqueueFillBuffer(buffer_B, 0, 0, output_size);//zero B buffer on device memory
 
 		//5.2 Setup and execute all kernels (i.e. device code)
-		cl::Kernel kernel_1 = cl::Kernel(program, "reduce_add_1");
+		cl::Kernel kernel_1 = cl::Kernel(program, "find_min_val");
 		kernel_1.setArg(0, buffer_A);
 		kernel_1.setArg(1, buffer_B);
-//		kernel_1.setArg(2, cl::Local(local_size*sizeof(mytype)));//local memory size
+		kernel_1.setArg(2, cl::Local(local_size*sizeof(mytype)));//local memory size
 
 		//call all kernels in a sequence
 		queue.enqueueNDRangeKernel(kernel_1, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
@@ -159,8 +154,8 @@ int main(int argc, char **argv) {
 		//5.3 Copy the result from device to host
 		queue.enqueueReadBuffer(buffer_B, CL_TRUE, 0, output_size, &B[0]);
 
-		std::cout << "A = " << A << std::endl;
-		std::cout << "B = " << B << std::endl;
+		std::cout << "Data = " << data[0] << std::endl;
+		std::cout << "Min = " << B[0] / 100 << std::endl;
 
 		system("pause");
 
