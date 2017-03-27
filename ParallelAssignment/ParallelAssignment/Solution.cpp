@@ -174,7 +174,8 @@ int main(int argc, char **argv) {
 		queue.enqueueReadBuffer(buffer_D, CL_TRUE, 0, output_size, &D[0]);
 
 		//std::cout << "Data = " << *data << std::endl;
-		std::cout << "Min = " << B[0] / 100 << std::endl;
+		std::cout << "Min = " << (float)B[0] / 100.0f << std::endl;
+		std::cout << "Max = " << (float)D[0] / 100.0f << std::endl;
 
 		system("pause");
 
