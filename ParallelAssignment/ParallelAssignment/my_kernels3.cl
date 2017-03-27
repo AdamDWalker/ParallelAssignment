@@ -94,3 +94,15 @@ __kernel void find_mean_val(__global const int* A, __global int* B, __local int*
 		atomic_add(&B[0],scratch[lid]);
 	}
 }
+
+// How to do standard deviation
+
+// Create kernel to find the variance, this will need to take in an additional parameter of the mean of the dataset. 
+// 1. Take in vector A
+// 2. Minus the mean from each value in A
+// 3. barrier break
+// 4. Square each value and return as output B.
+
+// These returned values should be summed in the summation kernel then returned
+// This sum of the squared values should be divided by N to get the mean of this.
+// Sqrt this mean value should get the standard deviation - I think
