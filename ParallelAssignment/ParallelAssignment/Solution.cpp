@@ -12,7 +12,11 @@
 
 #include "Utils.h"
 
-
+///
+/// Function takes the filepath and uses ifstream to read in the contents of that file.
+/// The contents are read as a string but then the final column of data (after the 5th space character) is parsed to a float
+/// The float is * by 100 and saved as an int so it can be passed into OpenCL kernels and still retain the decimal place data
+///
 vector<int>* readFile(std::string filename)
 {
 	vector<int>* data = new vector<int>;
@@ -43,7 +47,8 @@ vector<int>* readFile(std::string filename)
 	return data;
 }
 
-void print_help() {
+void print_help() 
+{
 	std::cerr << "Application usage:" << std::endl;
 
 	std::cerr << "  -p : select platform " << std::endl;
@@ -52,12 +57,14 @@ void print_help() {
 	std::cerr << "  -h : print this message" << std::endl;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
 	//Part 1 - handle command line options such as device selection, verbosity, etc.
 	int platform_id = 0;
 	int device_id = 0;
 
-	for (int i = 1; i < argc; i++)	{
+	for (int i = 1; i < argc; i++)	
+	{
 		if ((strcmp(argv[i], "-p") == 0) && (i < (argc - 1))) { platform_id = atoi(argv[++i]); }
 		else if ((strcmp(argv[i], "-d") == 0) && (i < (argc - 1))) { device_id = atoi(argv[++i]); }
 		else if (strcmp(argv[i], "-l") == 0) { std::cout << ListPlatformsDevices() << std::endl; }
@@ -69,7 +76,8 @@ int main(int argc, char **argv) {
 	std::cout << "Reading file complete" << std::endl;
 
 	//detect any potential exceptions
-	try {
+	try 
+	{
 		//Part 2 - host operations
 		//2.1 Select computing devices
 		cl::Context context = GetContext(platform_id, device_id);
@@ -88,10 +96,12 @@ int main(int argc, char **argv) {
 		cl::Program program(context, sources);
 
 		//build and debug the kernel code
-		try {
+		try 
+		{
 			program.build();
 		}
-		catch (const cl::Error& err) {
+		catch (const cl::Error& err) 
+		{
 			std::cout << "Build Status: " << program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(context.getInfo<CL_CONTEXT_DEVICES>()[0]) << std::endl;
 			std::cout << "Build Options:\t" << program.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(context.getInfo<CL_CONTEXT_DEVICES>()[0]) << std::endl;
 			std::cout << "Build Log:\t " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(context.getInfo<CL_CONTEXT_DEVICES>()[0]) << std::endl;
@@ -113,7 +123,8 @@ int main(int argc, char **argv) {
 
 		//if the input vector is not a multiple of the local_size
 		//insert additional neutral elements (0 for addition) so that the total will not be affected
-		if (padding_size) {
+		if (padding_size) 
+		{
 			//create an extra vector with neutral values
 			std::vector<int> A_ext(local_size-padding_size, 0);
 			//append that extra vector to our input
@@ -124,7 +135,7 @@ int main(int argc, char **argv) {
 		size_t input_size = data->size()*sizeof(mytype);//size in bytes
 		size_t nr_groups = input_elements / local_size;
 
-		//host - output
+		// Host - Output
 		std::vector<mytype> B(input_elements);
 		size_t output_size = B.size()*sizeof(mytype);//size in bytes
 		
@@ -133,7 +144,7 @@ int main(int argc, char **argv) {
 		std::vector<mytype> E(input_elements);
 
 
-		//device - buffers
+		// Device - Buffers  |  One input buffer and several output buffers
 		cl::Buffer buffer_A(context, CL_MEM_READ_ONLY, input_size);
 
 		cl::Buffer buffer_B(context, CL_MEM_READ_WRITE, output_size);
@@ -142,16 +153,16 @@ int main(int argc, char **argv) {
 		cl::Buffer buffer_E(context, CL_MEM_READ_WRITE, output_size);
 
 
-		//Part 5 - device operations
-		//5.1 copy array A to and initialise other arrays on device memory
+		// Copy array A to and initialise other arrays on device memory
 		queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, input_size, &(*data)[0]);
 
-		queue.enqueueFillBuffer(buffer_B, 0, 0, output_size);//zero B buffer on device memory
+		// Zero buffer on device memory for output
+		queue.enqueueFillBuffer(buffer_B, 0, 0, output_size);
 		queue.enqueueFillBuffer(buffer_C, 0, 0, output_size);
 		queue.enqueueFillBuffer(buffer_D, 0, 0, output_size);
 		queue.enqueueFillBuffer(buffer_E, 0, 0, output_size);
 
-		//5.2 Setup and execute all kernels (i.e. device code)
+		// Setup and execute all kernels (i.e. device code)
 		cl::Kernel kernel_1 = cl::Kernel(program, "find_min_val");
 		kernel_1.setArg(0, buffer_A);
 		kernel_1.setArg(1, buffer_B);
@@ -168,26 +179,27 @@ int main(int argc, char **argv) {
 		kernel_3.setArg(2, cl::Local(local_size * sizeof(mytype)));
 
 
-		//call all kernels in a sequence
+		// Call all the kernels in sequence - Except for the mean and standard deviation which require results from these to work
 		queue.enqueueNDRangeKernel(kernel_1, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
 		queue.enqueueNDRangeKernel(kernel_2, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
 		queue.enqueueNDRangeKernel(kernel_3, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
 
 
-		//5.3 Copy the result from device to host
+		// Copy the result from device to host
 		queue.enqueueReadBuffer(buffer_B, CL_TRUE, 0, output_size, &B[0]);
 		queue.enqueueReadBuffer(buffer_C, CL_TRUE, 0, output_size, &C[0]);
 		queue.enqueueReadBuffer(buffer_D, CL_TRUE, 0, output_size, &D[0]);
 
+		// Save the results for easier reuse
 		float minVal = (float)B[0] / 100.0f;
 		float maxVal = (float)C[0] / 100.0f;
 		float mean = ((float)D[0] / data->size()) / 100.0f;
 
+		// Create and call the find variance kernel now that the mean is known
 		cl::Kernel kernel_4 = cl::Kernel(program, "find_variance");
 		kernel_4.setArg(0, buffer_A);
 		kernel_4.setArg(1, buffer_E);
 		kernel_4.setArg(2, (int)mean);
-
 		queue.enqueueNDRangeKernel(kernel_4, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
 		queue.enqueueReadBuffer(buffer_E, CL_TRUE, 0, output_size, &E[0]);
 
@@ -203,7 +215,8 @@ int main(int argc, char **argv) {
 		system("pause");
 
 	}
-	catch (cl::Error err) {
+	catch (cl::Error err) 
+	{
 		std::cerr << "ERROR: " << err.what() << ", " << getErrorString(err.err()) << std::endl;
 	}
 
