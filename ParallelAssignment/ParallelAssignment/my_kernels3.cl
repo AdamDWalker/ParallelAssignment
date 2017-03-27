@@ -1,5 +1,8 @@
-﻿//reduce using local memory + accumulation of local sums into a single location
-//works with any number of groups - not optimal!
+﻿///
+/// This kernel finds the minimum value in the input vector A, by using a reduction pattern 
+/// compare two values from the vector and saving the smallest one. This repeats until the total smallest value 
+/// is stored at the first index position of the returned vector B. 
+///
 __kernel void find_min_val(__global const int* A, __global int* B, __local int* scratch) 
 {
 	int id = get_global_id(0);
@@ -30,6 +33,9 @@ __kernel void find_min_val(__global const int* A, __global int* B, __local int* 
 	}
 }
 
+///
+///	This kernel works exactly the same as the min value finder, except with the < symbol reversed
+///
 __kernel void find_max_val(__global const int* A, __global int* B, __local int* scratch) 
 {
 	int id = get_global_id(0);
