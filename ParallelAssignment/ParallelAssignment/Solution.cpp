@@ -134,6 +134,7 @@ int main(int argc, char **argv) {
 		
 		std::vector<mytype> C(input_elements);
 		std::vector<mytype> D(input_elements);
+		std::vector<mytype> E(input_elements);
 
 
 		//device - buffers
@@ -142,16 +143,17 @@ int main(int argc, char **argv) {
 		cl::Buffer buffer_B(context, CL_MEM_READ_WRITE, output_size);
 		cl::Buffer buffer_C(context, CL_MEM_READ_WRITE, output_size);
 		cl::Buffer buffer_D(context, CL_MEM_READ_WRITE, output_size);
+		cl::Buffer buffer_E(context, CL_MEM_READ_WRITE, output_size);
 
 
 		//Part 5 - device operations
-		//std::cout << "Data - " << &data << std::endl;
 		//5.1 copy array A to and initialise other arrays on device memory
 		queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, input_size, &(*data)[0]);
 
 		queue.enqueueFillBuffer(buffer_B, 0, 0, output_size);//zero B buffer on device memory
 		queue.enqueueFillBuffer(buffer_C, 0, 0, output_size);
 		queue.enqueueFillBuffer(buffer_D, 0, 0, output_size);
+		queue.enqueueFillBuffer(buffer_E, 0, 0, output_size);
 
 		//5.2 Setup and execute all kernels (i.e. device code)
 		cl::Kernel kernel_1 = cl::Kernel(program, "find_min_val");
@@ -180,10 +182,26 @@ int main(int argc, char **argv) {
 		queue.enqueueReadBuffer(buffer_C, CL_TRUE, 0, output_size, &C[0]);
 		queue.enqueueReadBuffer(buffer_D, CL_TRUE, 0, output_size, &D[0]);
 
-		//std::cout << "Data = " << *data << std::endl;
-		std::cout << "Min = " << (float)B[0] / 100.0f << std::endl;
-		std::cout << "Max = " << (float)C[0] / 100.0f << std::endl;
-		std::cout << "Mean = " << ((float)D[0] / data->size()) / 100.0f << std::endl;
+		float minVal = (float)B[0] / 100.0f;
+		float maxVal = (float)C[0] / 100.0f;
+		float mean = ((float)D[0] / data->size()) / 100.0f;
+
+		cl::Kernel kernel_4 = cl::Kernel(program, "find_variance");
+		kernel_4.setArg(0, buffer_A);
+		kernel_4.setArg(1, buffer_E);
+		kernel_4.setArg(2, (int)mean);
+
+		queue.enqueueNDRangeKernel(kernel_4, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
+		queue.enqueueReadBuffer(buffer_E, CL_TRUE, 0, output_size, &E[0]);
+
+		float variance = (float)E[0] / 100.0f;
+
+		// ================================== Printing results ================================== //
+		std::cout << "\n\n##=================== Results ===================##\n" << std::endl;
+		std::cout << "Min = " << minVal << std::endl;
+		std::cout << "Max = " << maxVal << std::endl;
+		std::cout << "Mean = " << mean << std::endl;
+		std::cout << "Variance = " << variance << std::endl;
 
 		system("pause");
 
