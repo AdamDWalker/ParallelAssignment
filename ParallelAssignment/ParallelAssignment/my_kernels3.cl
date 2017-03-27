@@ -95,6 +95,17 @@ __kernel void find_mean_val(__global const int* A, __global int* B, __local int*
 	}
 }
 
+__kernel void find_variance(__global const int* A, __global int* B, int mean) 
+{
+	int id = get_global_id(0);
+
+	B[id] = A[id] - mean;
+
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	B[id] = (B[id] * B[id]) / 100;
+}
+
 // How to do standard deviation
 
 // Create kernel to find the variance, this will need to take in an additional parameter of the mean of the dataset. 
