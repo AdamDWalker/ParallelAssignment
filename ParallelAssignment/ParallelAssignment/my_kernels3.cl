@@ -72,7 +72,7 @@ __kernel void find_mean_val(__global const int* A, __global int* B, __local int*
 	int lid = get_local_id(0);
 	int N = get_local_size(0);
 
-	//printf("[Max] Value of A = %i\n",A[id]);
+	//printf("[Mean] Value of A = %i\n",A[id]);
 
 	//cache all N values from global memory to local memory
 	scratch[lid] = A[id];
@@ -83,7 +83,7 @@ __kernel void find_mean_val(__global const int* A, __global int* B, __local int*
 	{
 		if (!(lid % (i * 2)) && ((lid + i) < N)) 
 			scratch[lid] += scratch[lid + i];
-			//printf("[Max] Comparing: %i  and   %i\n", scratch[lid], scratch[lid + i] );
+			//printf("[Mean] Comparing: %i  and   %i\n", scratch[lid], scratch[lid + i] );
 		barrier(CLK_LOCAL_MEM_FENCE);
 	}
 	//we add results from all local groups to the first element of the array
