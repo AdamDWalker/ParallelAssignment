@@ -67,12 +67,8 @@ int main(int argc, char **argv) {
 
 	try
 	{
-		vector<float>* data = readFile("temp_lincolnshire_short_test.txt");
+		vector<float>* data = readFile("temp_lincolnshire_short.txt");
 		std::cout << "Reading file complete" << std::endl;
-		for (size_t i = 0; i < 10; i++)
-		{
-			std::cout << (*data)[i] << std::endl;
-		}
 	}
 	catch (exception e)
 	{
@@ -165,6 +161,9 @@ int main(int argc, char **argv) {
 
 		std::cout << "A = " << A << std::endl;
 		std::cout << "B = " << B << std::endl;
+
+		system("pause");
+
 	}
 	catch (cl::Error err) {
 		std::cerr << "ERROR: " << err.what() << ", " << getErrorString(err.err()) << std::endl;
