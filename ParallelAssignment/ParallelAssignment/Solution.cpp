@@ -81,7 +81,7 @@ int main(int argc, char **argv)
 	
 	TimePoint timeStart = Clock::now();
 
-	// C:/Users/Computing/Documents/GitHub/ParallelAssignment/ParallelAssignment/x64/Debug/
+	// Host - Input
 	vector<int>* data = readFile(filePath);
 
 	auto readTime = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - timeStart).count();
@@ -124,8 +124,6 @@ int main(int argc, char **argv)
 		typedef int mytype;
 
 		//Part 4 - memory allocation
-		//host - input
-		std::vector<mytype> A = {10, 2, 3, 4, 5, 6, 7, 8, 9 , 35};//allocate 10 elements with an initial value 1 - their sum is 10 so it should be easy to check the results!
 
 		//the following part adjusts the length of the input vector so it can be run for a specific workgroup size
 		//if the total input length is divisible by the workgroup size
