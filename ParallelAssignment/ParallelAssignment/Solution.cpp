@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <chrono>
 
 #ifdef __APPLE__
 #include <OpenCL/cl.hpp>
@@ -62,6 +63,12 @@ int main(int argc, char **argv)
 	//Part 1 - handle command line options such as device selection, verbosity, etc.
 	int platform_id = 0;
 	int device_id = 0;
+	std::string fileName = "temp_lincolnshire.txt";
+	std::string filePath = "C:/Users/Computing/Documents/GitHub/ParallelAssignment/ParallelAssignment/x64/Debug/";
+	filePath.append(fileName);
+
+	typedef std::chrono::steady_clock::time_point TimePoint;
+	typedef std::chrono::high_resolution_clock Clock;
 
 	for (int i = 1; i < argc; i++)	
 	{
@@ -70,11 +77,15 @@ int main(int argc, char **argv)
 		else if (strcmp(argv[i], "-l") == 0) { std::cout << ListPlatformsDevices() << std::endl; }
 		else if (strcmp(argv[i], "-h") == 0) { print_help(); }
 	}
+	
+	TimePoint timeStart = Clock::now();
 
 	// C:/Users/Computing/Documents/GitHub/ParallelAssignment/ParallelAssignment/x64/Debug/
-	vector<int>* data = readFile("C:/Users/Computing/Documents/GitHub/ParallelAssignment/ParallelAssignment/x64/Debug/temp_lincolnshire.txt");
-	std::cout << "Reading file complete" << std::endl;
+	vector<int>* data = readFile(filePath);
 
+	auto readTime = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - timeStart).count();
+	std::cout << "Reading file complete" << std::endl;
+	timeStart = Clock::now();
 	//detect any potential exceptions
 	try 
 	{
