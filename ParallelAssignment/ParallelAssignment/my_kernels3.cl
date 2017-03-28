@@ -103,7 +103,7 @@ __kernel void find_variance(__global const int* A, __global int* B, int mean)
 
 	barrier(CLK_LOCAL_MEM_FENCE);
 
-	B[id] = (B[id] * B[id]) / 100;
+	B[id] = (B[id] * B[id]) / 10000.0f;
 }
 
 // How to do standard deviation

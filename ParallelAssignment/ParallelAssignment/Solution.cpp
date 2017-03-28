@@ -154,6 +154,7 @@ int main(int argc, char **argv)
 		std::vector<mytype> C(input_elements);
 		std::vector<mytype> D(input_elements);
 		std::vector<mytype> E(input_elements);
+		std::vector<unsigned int> F(input_elements);
 
 
 		// Device - Buffers  |  One input buffer and several output buffers
@@ -163,6 +164,7 @@ int main(int argc, char **argv)
 		cl::Buffer buffer_C(context, CL_MEM_READ_WRITE, output_size);
 		cl::Buffer buffer_D(context, CL_MEM_READ_WRITE, output_size);
 		cl::Buffer buffer_E(context, CL_MEM_READ_WRITE, output_size);
+		cl::Buffer buffer_F(context, CL_MEM_READ_WRITE, output_size);
 
 
 		// Copy array A to and initialise other arrays on device memory
@@ -173,6 +175,7 @@ int main(int argc, char **argv)
 		queue.enqueueFillBuffer(buffer_C, 0, 0, output_size);
 		queue.enqueueFillBuffer(buffer_D, 0, 0, output_size);
 		queue.enqueueFillBuffer(buffer_E, 0, 0, output_size);
+		queue.enqueueFillBuffer(buffer_F, 0, 0, output_size);
 
 		// Setup and execute all kernels (i.e. device code)
 		cl::Kernel kernel_1 = cl::Kernel(program, "reduce_find_min");
@@ -211,11 +214,22 @@ int main(int argc, char **argv)
 		cl::Kernel kernel_4 = cl::Kernel(program, "find_variance");
 		kernel_4.setArg(0, buffer_A);
 		kernel_4.setArg(1, buffer_E);
-		kernel_4.setArg(2, (int)mean);
+		kernel_4.setArg(2, (int)(mean * 100));
+
 		queue.enqueueNDRangeKernel(kernel_4, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
 		queue.enqueueReadBuffer(buffer_E, CL_TRUE, 0, output_size, &E[0]);
 
-		float variance = (float)E[0] / 100.0f;
+		// Pass in buffer E which has the output from the variance calculations
+		cl::Kernel kernel_5 = cl::Kernel(program, "reduce_find_sum");
+		kernel_5.setArg(0, buffer_E);
+		kernel_5.setArg(1, buffer_F);
+		kernel_5.setArg(2, cl::Local(local_size * sizeof(mytype)));
+
+		queue.enqueueNDRangeKernel(kernel_5, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
+		queue.enqueueReadBuffer(buffer_F, CL_TRUE, 0, output_size, &F[0]);
+
+		float variance = F[0] / F.size();
+		float stdev = sqrt(variance);
 
 		// ================================== Printing Details ================================== //
 		std::cout << "\n\n##=================== Details ===================##\n" << std::endl;
@@ -229,6 +243,7 @@ int main(int argc, char **argv)
 		std::cout << "Max = " << maxVal << std::endl;
 		std::cout << "Mean = " << mean << std::endl;
 		std::cout << "Variance = " << variance << std::endl;
+		std::cout << "Standard Deviation = " << stdev << std::endl;
 
 		system("pause");
 
