@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 	vector<int>* data = readFile(filePath);
 
 	auto readTime = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - timeStart).count();
-	std::cout << "Reading file complete" << std::endl;
+	cout << "Reading file complete" << endl;
 	timeStart = Clock::now();
 
 	//detect any potential exceptions
@@ -115,9 +115,9 @@ int main(int argc, char **argv)
 		}
 		catch (const cl::Error& err) 
 		{
-			std::cout << "Build Status: " << program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(context.getInfo<CL_CONTEXT_DEVICES>()[0]) << std::endl;
-			std::cout << "Build Options:\t" << program.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(context.getInfo<CL_CONTEXT_DEVICES>()[0]) << std::endl;
-			std::cout << "Build Log:\t " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(context.getInfo<CL_CONTEXT_DEVICES>()[0]) << std::endl;
+			cout << "Build Status: " << program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(context.getInfo<CL_CONTEXT_DEVICES>()[0]) << endl;
+			cout << "Build Options:\t" << program.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(context.getInfo<CL_CONTEXT_DEVICES>()[0]) << endl;
+			cout << "Build Log:\t " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(context.getInfo<CL_CONTEXT_DEVICES>()[0]) << endl;
 			throw err;
 		}
 
@@ -147,15 +147,15 @@ int main(int argc, char **argv)
 		size_t nr_groups = input_elements / local_size;
 
 		// Host - Output
-		std::vector<mytype> B(input_elements);
+		vector<mytype> B(input_elements);
 		size_t output_size = B.size()*sizeof(mytype);//size in bytes
 		
-		std::vector<mytype> C(input_elements);
-		std::vector<mytype> D(input_elements);
-		std::vector<mytype> E(input_elements);
-		std::vector<unsigned int> F(input_elements);
-		std::vector<mytype> G(input_elements);
-		std::vector<mytype> H(input_elements);
+		vector<mytype> C(input_elements);
+		vector<mytype> D(input_elements);
+		vector<mytype> E(input_elements);
+		vector<unsigned int> F(input_elements);
+		vector<mytype> G(input_elements);
+		vector<mytype> H(input_elements);
 
 
 		// Device - Buffers  |  One input buffer and several output buffers
@@ -260,24 +260,24 @@ int main(int argc, char **argv)
 		float stdev = sqrt(variance);
 
 		// ================================== Printing Details ================================== //
-		std::cout << "\n\n##======================= Details =======================##\n" << std::endl;
-		std::cout << "Weather data file: " << fileName << std::endl;
-		std::cout << "Total data values: " << (*data).size() << std::endl;
-		std::cout << "Total run time: " << (readTime / 1000.0f) << " seconds" << std::endl;
+		cout << "\n\n##======================= Details =======================##\n" << endl;
+		cout << "Weather data file: " << fileName << endl;
+		cout << "Total data values: " << (*data).size() << endl;
+		cout << "Read file run time: " << (readTime / 1000.0f) << " seconds" << endl;
 
 		// ================================== Printing results ================================== //
-		std::cout << "\n\n##======================= Results =======================##\n" << std::endl;
+		cout << "\n\n##======================= Results =======================##\n" << endl;
 
-		std::cout << "Reduce Min = " << minVal  << "	|	Execution Time [ns]: " << prof_event1.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
-		std::cout << "Atomic Min = " << atomMinVal << "	|	Execution Time [ns]: " << prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		cout << "Reduce Min = " << minVal  << "	|	Execution Time [ns]: " << prof_event1.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1.getProfilingInfo<CL_PROFILING_COMMAND_START>() << endl;
+		cout << "Atomic Min = " << atomMinVal << "	|	Execution Time [ns]: " << prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_START>() << endl;
 
-		std::cout << "\nReduce Max = " << maxVal  << "		|	Execution Time [ns]: " << prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_START>() << maxVal << std::endl;
-		std::cout << "Atom Max = " << maxVal << "		|	Execution Time [ns]: " << prof_event2A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2A.getProfilingInfo<CL_PROFILING_COMMAND_START>() << maxVal << std::endl;
+		cout << "\nReduce Max = " << maxVal  << "		|	Execution Time [ns]: " << prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_START>() << maxVal << endl;
+		cout << "Atom Max = " << maxVal << "		|	Execution Time [ns]: " << prof_event2A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2A.getProfilingInfo<CL_PROFILING_COMMAND_START>() << maxVal << endl;
 
-		std::cout << "\nMean = " << mean << "		|	Execution Time [ns]: " << prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		cout << "\nMean = " << mean << "		|	Execution Time [ns]: " << prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_START>() << endl;
 
-		std::cout << "Variance = " << variance << "		|	Execution Time [ns]: " << prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
-		std::cout << "\nStandard Deviation = " << stdev << std::endl;
+		cout << "Variance = " << variance << "		|	Execution Time [ns]: " << prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_START>() << endl;
+		cout << "\nStandard Deviation = " << stdev << endl;
 
 		system("pause");
 
