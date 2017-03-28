@@ -60,6 +60,7 @@ void print_help()
 
 int main(int argc, char **argv)
 {
+	
 	//Part 1 - handle command line options such as device selection, verbosity, etc.
 	int platform_id = 0;
 	int device_id = 0;
@@ -215,6 +216,12 @@ int main(int argc, char **argv)
 		queue.enqueueReadBuffer(buffer_E, CL_TRUE, 0, output_size, &E[0]);
 
 		float variance = (float)E[0] / 100.0f;
+
+		// ================================== Printing Details ================================== //
+		std::cout << "\n\n##=================== Details ===================##\n" << std::endl;
+		std::cout << "Weather data file: " << fileName << std::endl;
+		std::cout << "Total data values: " << (*data).size() << std::endl;
+		std::cout << "Total run time: " << (readTime / 1000.0f) << " seconds" << std::endl;
 
 		// ================================== Printing results ================================== //
 		std::cout << "\n\n##=================== Results ===================##\n" << std::endl;
