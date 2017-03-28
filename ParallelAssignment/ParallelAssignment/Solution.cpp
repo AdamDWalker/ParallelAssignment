@@ -257,7 +257,7 @@ int main(int argc, char **argv)
 		std::cout << "\n\n##=================== Results ===================##\n" << std::endl;
 
 		std::cout << "Reduce Min = " << minVal  << "	|	Execution Time [ns]: " << prof_event1.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
-		std::cout << "Atomic Min = " << minVal << "	|	Execution Time [ns]: " << prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		std::cout << "Atomic Min = " << atomMinVal << "		|	Execution Time [ns]: " << prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
 
 		std::cout << "Reduce Max = " << maxVal  << "		|	Execution Time [ns]: " << prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_START>() << maxVal << std::endl;
 
