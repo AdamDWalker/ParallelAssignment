@@ -9,8 +9,6 @@ __kernel void reduce_find_min(__global const int* A, __global int* B, __local in
 	int lid = get_local_id(0);
 	int N = get_local_size(0);
 
-	//printf("[Min] Value of A = %i\n",A[id]);
-
 	//cache all N values from global memory to local memory
 	scratch[lid] = A[id];
 
@@ -20,7 +18,7 @@ __kernel void reduce_find_min(__global const int* A, __global int* B, __local in
 	{
 		if (!(lid % (i * 2)) && ((lid + i) < N)) 
 			scratch[lid] = (scratch[lid] < scratch[lid + i]) ? scratch[lid] : scratch[lid + i];
-			//printf("[Min] Comparing: %i  and   %i\n", scratch[lid], scratch[lid + i] );
+
 		barrier(CLK_LOCAL_MEM_FENCE);
 	}
 
@@ -42,8 +40,6 @@ __kernel void reduce_find_max(__global const int* A, __global int* B, __local in
 	int lid = get_local_id(0);
 	int N = get_local_size(0);
 
-	//printf("[Max] Value of A = %i\n",A[id]);
-
 	//cache all N values from global memory to local memory
 	scratch[lid] = A[id];
 
@@ -53,7 +49,7 @@ __kernel void reduce_find_max(__global const int* A, __global int* B, __local in
 	{
 		if (!(lid % (i * 2)) && ((lid + i) < N)) 
 			scratch[lid] = (scratch[lid] > scratch[lid + i]) ? scratch[lid] : scratch[lid + i];
-			//printf("[Max] Comparing: %i  and   %i\n", scratch[lid], scratch[lid + i] );
+
 		barrier(CLK_LOCAL_MEM_FENCE);
 	}
 
@@ -72,8 +68,6 @@ __kernel void reduce_find_sum(__global const int* A, __global int* B, __local in
 	int lid = get_local_id(0);
 	int N = get_local_size(0);
 
-	//printf("[Mean] Value of A = %i\n",A[id]);
-
 	//cache all N values from global memory to local memory
 	scratch[lid] = A[id];
 
@@ -83,7 +77,7 @@ __kernel void reduce_find_sum(__global const int* A, __global int* B, __local in
 	{
 		if (!(lid % (i * 2)) && ((lid + i) < N)) 
 			scratch[lid] += scratch[lid + i];
-			//printf("[Mean] Comparing: %i  and   %i\n", scratch[lid], scratch[lid + i] );
+
 		barrier(CLK_LOCAL_MEM_FENCE);
 	}
 	//we add results from all local groups to the first element of the array
@@ -101,8 +95,6 @@ __kernel void reduce_find_sum_variance(__global const int* A, __global int* B, _
 	int lid = get_local_id(0);
 	int N = get_local_size(0);
 
-	//printf("[Mean] Value of A = %i\n",A[id]);
-
 	//cache all N values from global memory to local memory
 	scratch[lid] = A[id];
 
@@ -112,7 +104,7 @@ __kernel void reduce_find_sum_variance(__global const int* A, __global int* B, _
 	{
 		if (!(lid % (i * 2)) && ((lid + i) < N)) 
 			scratch[lid] += scratch[lid + i];
-			//printf("[Mean] Comparing: %i  and   %i\n", scratch[lid], scratch[lid + i] );
+
 		barrier(CLK_LOCAL_MEM_FENCE);
 	}
 
@@ -128,7 +120,6 @@ __kernel void reduce_find_sum_variance(__global const int* A, __global int* B, _
 
 __kernel void find_variance(__global const int* A, __global int* B, int mean) 
 {
-	//printf("Mean - %i\n", mean);
 	int id = get_global_id(0);
 
 	B[id] = A[id] - mean;
@@ -137,17 +128,3 @@ __kernel void find_variance(__global const int* A, __global int* B, int mean)
 
 	B[id] = (B[id] * B[id]);
 }
-
-
-
-// How to do standard deviation
-
-// Create kernel to find the variance, this will need to take in an additional parameter of the mean of the dataset. 
-// 1. Take in vector A
-// 2. Minus the mean from each value in A
-// 3. barrier break 
-// 4. Square each value and return as output B. #
-
-// These returned values should be summed in the summation kernel then returned
-// This sum of the squared values should be divided by N to get the mean of this.
-// Sqrt this mean value should get the standard deviation - I think
