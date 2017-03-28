@@ -163,17 +163,17 @@ int main(int argc, char **argv)
 		queue.enqueueFillBuffer(buffer_E, 0, 0, output_size);
 
 		// Setup and execute all kernels (i.e. device code)
-		cl::Kernel kernel_1 = cl::Kernel(program, "find_min_val");
+		cl::Kernel kernel_1 = cl::Kernel(program, "reduce_find_min");
 		kernel_1.setArg(0, buffer_A);
 		kernel_1.setArg(1, buffer_B);
 		kernel_1.setArg(2, cl::Local(local_size*sizeof(mytype)));//local memory size
 
-		cl::Kernel kernel_2 = cl::Kernel(program, "find_max_val");
+		cl::Kernel kernel_2 = cl::Kernel(program, "reduce_find_max");
 		kernel_2.setArg(0, buffer_A);
 		kernel_2.setArg(1, buffer_C);
 		kernel_2.setArg(2, cl::Local(local_size * sizeof(mytype)));
 
-		cl::Kernel kernel_3 = cl::Kernel(program, "find_mean_val");
+		cl::Kernel kernel_3 = cl::Kernel(program, "reduce_find_sum");
 		kernel_3.setArg(0, buffer_A);
 		kernel_3.setArg(1, buffer_D);
 		kernel_3.setArg(2, cl::Local(local_size * sizeof(mytype)));

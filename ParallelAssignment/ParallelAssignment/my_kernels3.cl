@@ -3,7 +3,7 @@
 /// compare two values from the vector and saving the smallest one. This repeats until the total smallest value 
 /// is stored at the first index position of the returned vector B. 
 ///
-__kernel void find_min_val(__global const int* A, __global int* B, __local int* scratch) 
+__kernel void reduce_find_min(__global const int* A, __global int* B, __local int* scratch) 
 {
 	int id = get_global_id(0);
 	int lid = get_local_id(0);
@@ -36,7 +36,7 @@ __kernel void find_min_val(__global const int* A, __global int* B, __local int* 
 ///
 ///	This kernel works exactly the same as the min value finder, except with the < symbol reversed
 ///
-__kernel void find_max_val(__global const int* A, __global int* B, __local int* scratch) 
+__kernel void reduce_find_max(__global const int* A, __global int* B, __local int* scratch) 
 {
 	int id = get_global_id(0);
 	int lid = get_local_id(0);
@@ -66,7 +66,7 @@ __kernel void find_max_val(__global const int* A, __global int* B, __local int* 
 	}
 }
 
-__kernel void find_mean_val(__global const int* A, __global int* B, __local int* scratch) 
+__kernel void reduce_find_sum(__global const int* A, __global int* B, __local int* scratch) 
 {
 	int id = get_global_id(0);
 	int lid = get_local_id(0);
