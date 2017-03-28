@@ -98,7 +98,7 @@ int main(int argc, char **argv)
 		std::cout << "Running on " << GetPlatformName(platform_id) << ", " << GetDeviceName(platform_id, device_id) << std::endl;
 
 		//create a queue to which we will push commands for the device
-		cl::CommandQueue queue(context);
+		cl::CommandQueue queue(context, CL_QUEUE_PROFILING_ENABLE);
 
 		//2.2 Load & build the device code
 		cl::Program::Sources sources;
@@ -194,10 +194,15 @@ int main(int argc, char **argv)
 		kernel_3.setArg(2, cl::Local(local_size * sizeof(mytype)));
 
 
+		cl::Event prof_event1;
+		cl::Event prof_event2;
+		cl::Event prof_event3;
+		cl::Event prof_event4;
+
 		// Call all the kernels in sequence - Except for the mean and standard deviation which require results from these to work
-		queue.enqueueNDRangeKernel(kernel_1, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
-		queue.enqueueNDRangeKernel(kernel_2, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
-		queue.enqueueNDRangeKernel(kernel_3, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
+		queue.enqueueNDRangeKernel(kernel_1, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size), NULL, &prof_event1);
+		queue.enqueueNDRangeKernel(kernel_2, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size), NULL, &prof_event2);
+		queue.enqueueNDRangeKernel(kernel_3, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size), NULL, &prof_event3);
 
 
 		// Copy the result from device to host
@@ -216,7 +221,7 @@ int main(int argc, char **argv)
 		kernel_4.setArg(1, buffer_E);
 		kernel_4.setArg(2, (int)(mean * 100));
 
-		queue.enqueueNDRangeKernel(kernel_4, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
+		queue.enqueueNDRangeKernel(kernel_4, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size), NULL, &prof_event4);
 		queue.enqueueReadBuffer(buffer_E, CL_TRUE, 0, output_size, &E[0]);
 
 		// Pass in buffer E which has the output from the variance calculations
@@ -239,10 +244,10 @@ int main(int argc, char **argv)
 
 		// ================================== Printing results ================================== //
 		std::cout << "\n\n##=================== Results ===================##\n" << std::endl;
-		std::cout << "Min = " << minVal << std::endl;
-		std::cout << "Max = " << maxVal << std::endl;
-		std::cout << "Mean = " << mean << std::endl;
-		std::cout << "Variance = " << variance << std::endl;
+		std::cout << "Min = " << minVal  << "	|	Execution Time [ns]: " << prof_event1.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		std::cout << "Max = " << maxVal  << "	|	Execution Time [ns]: " << prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_START>() << maxVal << std::endl;
+		std::cout << "Mean = " << mean << "	|	Execution Time [ns]: " << prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		std::cout << "Variance = " << variance << "	|	Execution Time [ns]: " << prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
 		std::cout << "Standard Deviation = " << stdev << std::endl;
 
 		system("pause");
