@@ -87,6 +87,7 @@ int main(int argc, char **argv)
 	auto readTime = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - timeStart).count();
 	std::cout << "Reading file complete" << std::endl;
 	timeStart = Clock::now();
+
 	//detect any potential exceptions
 	try 
 	{
@@ -129,7 +130,7 @@ int main(int argc, char **argv)
 		//the following part adjusts the length of the input vector so it can be run for a specific workgroup size
 		//if the total input length is divisible by the workgroup size
 		//this makes the code more efficient
-		size_t local_size = 10;
+		size_t local_size = 32;
 
 		size_t padding_size = data->size() % local_size;
 
@@ -225,7 +226,7 @@ int main(int argc, char **argv)
 		queue.enqueueReadBuffer(buffer_E, CL_TRUE, 0, output_size, &E[0]);
 
 		// Pass in buffer E which has the output from the variance calculations
-		cl::Kernel kernel_5 = cl::Kernel(program, "reduce_find_sum");
+		cl::Kernel kernel_5 = cl::Kernel(program, "reduce_find_sum_variance");
 		kernel_5.setArg(0, buffer_E);
 		kernel_5.setArg(1, buffer_F);
 		kernel_5.setArg(2, cl::Local(local_size * sizeof(mytype)));
