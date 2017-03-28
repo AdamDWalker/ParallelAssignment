@@ -260,20 +260,21 @@ int main(int argc, char **argv)
 		float stdev = sqrt(variance);
 
 		// ================================== Printing Details ================================== //
-		std::cout << "\n\n##=================== Details ===================##\n" << std::endl;
+		std::cout << "\n\n##======================= Details =======================##\n" << std::endl;
 		std::cout << "Weather data file: " << fileName << std::endl;
 		std::cout << "Total data values: " << (*data).size() << std::endl;
 		std::cout << "Total run time: " << (readTime / 1000.0f) << " seconds" << std::endl;
 
 		// ================================== Printing results ================================== //
-		std::cout << "\n\n##=================== Results ===================##\n" << std::endl;
+		std::cout << "\n\n##======================= Results =======================##\n" << std::endl;
 
 		std::cout << "Reduce Min = " << minVal  << "	|	Execution Time [ns]: " << prof_event1.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
-		std::cout << "Atomic Min = " << atomMinVal << "		|	Execution Time [ns]: " << prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		std::cout << "Atomic Min = " << atomMinVal << "	|	Execution Time [ns]: " << prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
 
-		std::cout << "Reduce Max = " << maxVal  << "		|	Execution Time [ns]: " << prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_START>() << maxVal << std::endl;
+		std::cout << "\nReduce Max = " << maxVal  << "		|	Execution Time [ns]: " << prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_START>() << maxVal << std::endl;
+		std::cout << "Atom Max = " << maxVal << "		|	Execution Time [ns]: " << prof_event2A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2A.getProfilingInfo<CL_PROFILING_COMMAND_START>() << maxVal << std::endl;
 
-		std::cout << "Mean = " << mean << "		|	Execution Time [ns]: " << prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		std::cout << "\nMean = " << mean << "		|	Execution Time [ns]: " << prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
 
 		std::cout << "Variance = " << variance << "		|	Execution Time [ns]: " << prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
 		std::cout << "\nStandard Deviation = " << stdev << std::endl;
