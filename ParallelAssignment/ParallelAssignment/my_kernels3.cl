@@ -128,3 +128,18 @@ __kernel void find_variance(__global const int* A, __global int* B, int mean)
 
 	B[id] = (B[id] * B[id]);
 }
+
+
+__kernel void at_find_min(__global const int* A, __global int* B, __local int* scratch) 
+{
+	int id = get_global_id(0);
+	int lid = get_local_id(0);
+
+	//cache all N values from global memory to local memory
+	scratch[lid] = A[id];
+
+	barrier(CLK_LOCAL_MEM_FENCE);//wait for all local threads to finish copying from global to local memory
+
+	atomic_min(&B[0],scratch[lid]);
+
+}

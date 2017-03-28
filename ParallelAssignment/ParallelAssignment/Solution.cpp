@@ -156,6 +156,7 @@ int main(int argc, char **argv)
 		std::vector<mytype> D(input_elements);
 		std::vector<mytype> E(input_elements);
 		std::vector<unsigned int> F(input_elements);
+		std::vector<mytype> G(input_elements);
 
 
 		// Device - Buffers  |  One input buffer and several output buffers
@@ -166,6 +167,7 @@ int main(int argc, char **argv)
 		cl::Buffer buffer_D(context, CL_MEM_READ_WRITE, output_size);
 		cl::Buffer buffer_E(context, CL_MEM_READ_WRITE, output_size);
 		cl::Buffer buffer_F(context, CL_MEM_READ_WRITE, output_size);
+		cl::Buffer buffer_G(context, CL_MEM_READ_WRITE, output_size);
 
 
 		// Copy array A to and initialise other arrays on device memory
@@ -177,6 +179,7 @@ int main(int argc, char **argv)
 		queue.enqueueFillBuffer(buffer_D, 0, 0, output_size);
 		queue.enqueueFillBuffer(buffer_E, 0, 0, output_size);
 		queue.enqueueFillBuffer(buffer_F, 0, 0, output_size);
+		queue.enqueueFillBuffer(buffer_G, 0, 0, output_size);
 
 		// Setup and execute all kernels (i.e. device code)
 		cl::Kernel kernel_1 = cl::Kernel(program, "reduce_find_min");
@@ -189,13 +192,19 @@ int main(int argc, char **argv)
 		kernel_2.setArg(1, buffer_C);
 		kernel_2.setArg(2, cl::Local(local_size * sizeof(mytype)));
 
+		// This is for the atomic version rather than reduce
+		cl::Kernel kernel_1A = cl::Kernel(program, "at_find_min");
+		kernel_1A.setArg(0, buffer_A);
+		kernel_1A.setArg(1, buffer_B);
+		kernel_1A.setArg(2, cl::Local(local_size * sizeof(mytype)));
+
 		cl::Kernel kernel_3 = cl::Kernel(program, "reduce_find_sum");
 		kernel_3.setArg(0, buffer_A);
 		kernel_3.setArg(1, buffer_D);
 		kernel_3.setArg(2, cl::Local(local_size * sizeof(mytype)));
 
-
 		cl::Event prof_event1;
+		cl::Event prof_event1A;
 		cl::Event prof_event2;
 		cl::Event prof_event3;
 		cl::Event prof_event4;
@@ -204,16 +213,19 @@ int main(int argc, char **argv)
 		queue.enqueueNDRangeKernel(kernel_1, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size), NULL, &prof_event1);
 		queue.enqueueNDRangeKernel(kernel_2, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size), NULL, &prof_event2);
 		queue.enqueueNDRangeKernel(kernel_3, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size), NULL, &prof_event3);
+		queue.enqueueNDRangeKernel(kernel_1A, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size), NULL, &prof_event1A);
 
 
 		// Copy the result from device to host
 		queue.enqueueReadBuffer(buffer_B, CL_TRUE, 0, output_size, &B[0]);
 		queue.enqueueReadBuffer(buffer_C, CL_TRUE, 0, output_size, &C[0]);
 		queue.enqueueReadBuffer(buffer_D, CL_TRUE, 0, output_size, &D[0]);
+		queue.enqueueReadBuffer(buffer_G, CL_TRUE, 0, output_size, &G[0]); // For the atomic version
 
 		// Save the results for easier reuse
 		float minVal = (float)B[0] / 100.0f;
 		float maxVal = (float)C[0] / 100.0f;
+		float atomMinVal = (float)G[0] / 100.0f;
 		float mean = ((float)D[0] / data->size()) / 100.0f;
 
 		// Create and call the find variance kernel now that the mean is known
