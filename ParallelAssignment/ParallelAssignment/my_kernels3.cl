@@ -118,15 +118,18 @@ __kernel void reduce_find_sum_variance(__global const int* A, __global int* B, _
 	}
 }
 
-__kernel void find_variance(__global const int* A, __global int* B, int mean) 
+__kernel void find_variance(__global const int* A, __global int* B, int mean, int initialSize) 
 {
 	int id = get_global_id(0);
 
-	B[id] = A[id] - mean;
+	if(id < initialSize)
+	{ 
+		B[id] = A[id] - mean;
 
-	barrier(CLK_LOCAL_MEM_FENCE);
+		barrier(CLK_LOCAL_MEM_FENCE);
 
-	B[id] = (B[id] * B[id]);
+		B[id] = (B[id] * B[id]);
+	}
 }
 
 __kernel void at_find_min(__global const int* A, __global int* B, __local int* scratch) 
@@ -137,7 +140,7 @@ __kernel void at_find_min(__global const int* A, __global int* B, __local int* s
 	//cache all N values from global memory to local memory
 	scratch[lid] = A[id];
 
-	barrier(CLK_LOCAL_MEM_FENCE);//wait for all local threads to finish copying from global to local memory
+	barrier(CLK_LOCAL_MEM_FENCE); //wait for all local threads to finish copying from global to local memory
 
 	atomic_min(&B[0],scratch[lid]);
 }
@@ -150,7 +153,7 @@ __kernel void at_find_max(__global const int* A, __global int* B, __local int* s
 	//cache all N values from global memory to local memory
 	scratch[lid] = A[id];
 
-	barrier(CLK_LOCAL_MEM_FENCE);//wait for all local threads to finish copying from global to local memory
+	barrier(CLK_LOCAL_MEM_FENCE); //wait for all local threads to finish copying from global to local memory
 
 	atomic_max(&B[0],scratch[lid]);
 }

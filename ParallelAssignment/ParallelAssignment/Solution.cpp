@@ -89,7 +89,9 @@ int main(int argc, char **argv)
 	cout << "Reading file complete" << endl;
 	timeStart = Clock::now();
 
-	//detect any potential exceptions
+	int initalSize = data->size();
+
+	// Detect any potential exceptions
 	try 
 	{
 		//Part 2 - host operations
@@ -129,7 +131,7 @@ int main(int argc, char **argv)
 		//the following part adjusts the length of the input vector so it can be run for a specific workgroup size
 		//if the total input length is divisible by the workgroup size
 		//this makes the code more efficient
-		size_t local_size = 32;
+		size_t local_size = 1024;
 
 		size_t padding_size = data->size() % local_size;
 
@@ -244,6 +246,7 @@ int main(int argc, char **argv)
 		kernel_4.setArg(0, buffer_A);
 		kernel_4.setArg(1, buffer_E);
 		kernel_4.setArg(2, (int)(mean * 100));
+		kernel_4.setArg(3, initalSize);
 
 		queue.enqueueNDRangeKernel(kernel_4, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size), NULL, &prof_event4);
 		queue.enqueueReadBuffer(buffer_E, CL_TRUE, 0, output_size, &E[0]);
