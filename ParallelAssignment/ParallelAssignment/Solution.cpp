@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
+#include <iomanip>
 
 #ifdef __APPLE__
 #include <OpenCL/cl.hpp>
@@ -274,10 +275,10 @@ int main(int argc, char **argv)
 		cout << "\nReduce Max = " << maxVal  << "		|	Execution Time [ns]: " << prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_START>() << maxVal << endl;
 		cout << "Atom Max = " << maxVal << "		|	Execution Time [ns]: " << prof_event2A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2A.getProfilingInfo<CL_PROFILING_COMMAND_START>() << maxVal << endl;
 
-		cout << "\nMean = " << mean << "		|	Execution Time [ns]: " << prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_START>() << endl;
+		cout << "\nMean = " << std::fixed << std::setprecision(2) << mean << "		|	Execution Time [ns]: " << prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_START>() << endl;
 
-		cout << "Variance = " << variance << "		|	Execution Time [ns]: " << prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_START>() << endl;
-		cout << "\nStandard Deviation = " << stdev << endl;
+		cout << "Variance = " << std::fixed << std::setprecision(2) << variance << "	|	Execution Time [ns]: " << prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_START>() << endl;
+		cout << "\nStandard Deviation = " << std::fixed << std::setprecision(2) << stdev << endl;
 
 		system("pause");
 
