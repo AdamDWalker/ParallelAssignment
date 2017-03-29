@@ -309,10 +309,22 @@ int main(int argc, char **argv)
 
 		std::cout << "\nMean = " << std::fixed << std::setprecision(2) << mean << "		|	Execution Time [ns]: " << p3 << std::endl;
 
-		std::cout << "Variance = " << std::fixed << std::setprecision(2) << variance << "	|	Execution Time [ns]: " << p4 << std::endl;
+		std::cout << "\nVariance = " << std::fixed << std::setprecision(2) << variance << "	|	Execution Time [ns]: " << p4 << std::endl;
 		std::cout << "\nStandard Deviation = " << std::fixed << std::setprecision(2) << stdev << std::endl;
 
 		//std::cout << "\n\nSort: " << I[0] << "  -  " << I[initalSize - 1] << std::endl;
+
+		// ================================== Printing Profiling Data ================================== //
+		std::cout << "\n\n##========================== Profiling Data ==========================##\n" << std::endl;
+
+		std::cout << "Reduce Min	= " << GetFullProfilingInfo(prof_event1, ProfilingResolution::PROF_US) << endl;
+		std::cout << "Atomic Min	= " << GetFullProfilingInfo(prof_event1A, ProfilingResolution::PROF_US) << endl;
+		std::cout << "\nReduce Max	= " << GetFullProfilingInfo(prof_event2, ProfilingResolution::PROF_US) << endl;
+		std::cout << "Atomic Max	= " <<GetFullProfilingInfo(prof_event2A, ProfilingResolution::PROF_US) << endl;
+		std::cout << "\nMean		= " <<GetFullProfilingInfo(prof_event3, ProfilingResolution::PROF_US) << endl;
+		std::cout << "Variance	= " << GetFullProfilingInfo(prof_event4, ProfilingResolution::PROF_US) << endl;
+		std::cout << "\n" << endl;
+
 
 		std::system("pause");
 
