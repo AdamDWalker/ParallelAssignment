@@ -256,7 +256,7 @@ int main(int argc, char **argv)
 		queue.enqueueNDRangeKernel(kernel_5, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
 		queue.enqueueReadBuffer(buffer_F, CL_TRUE, 0, output_size, &F[0]);
 
-		float variance = F[0] / F.size();
+		float variance = (float)F[0] / F.size();
 		float stdev = sqrt(variance);
 
 		// ================================== Printing Details ================================== //
