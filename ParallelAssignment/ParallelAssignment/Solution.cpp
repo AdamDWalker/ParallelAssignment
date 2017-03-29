@@ -239,14 +239,30 @@ int main(int argc, char **argv)
 		queue.enqueueNDRangeKernel(kernel_2A, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size), NULL, &prof_event2A);
 
 
-		// Copy the result from device to host
-		queue.enqueueReadBuffer(buffer_B, CL_TRUE, 0, output_size, &B[0]);
-		queue.enqueueReadBuffer(buffer_C, CL_TRUE, 0, output_size, &C[0]);
-		queue.enqueueReadBuffer(buffer_D, CL_TRUE, 0, output_size, &D[0]);
-		queue.enqueueReadBuffer(buffer_G, CL_TRUE, 0, output_size, &G[0]); // For the atomic version
-		queue.enqueueReadBuffer(buffer_H, CL_TRUE, 0, output_size, &H[0]); 
+		// ================ Copy the result from device to host ================
 
-		// Save the results for easier reuse
+		// Reduce Min
+		queue.enqueueReadBuffer(buffer_B, CL_TRUE, 0, output_size, &B[0]);
+		uint64_t p1 = prof_event1.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1.getProfilingInfo<CL_PROFILING_COMMAND_START>();
+
+		// Reduce Max
+		queue.enqueueReadBuffer(buffer_C, CL_TRUE, 0, output_size, &C[0]);
+		uint64_t p2 = prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_START>();
+
+		// Mean
+		queue.enqueueReadBuffer(buffer_D, CL_TRUE, 0, output_size, &D[0]);
+		uint64_t p3 = prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_START>();
+
+		// Reduce Min
+		queue.enqueueReadBuffer(buffer_G, CL_TRUE, 0, output_size, &G[0]); // For the atomic version
+		uint64_t p1A = prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_START>();
+
+		// Atomic Max
+		queue.enqueueReadBuffer(buffer_H, CL_TRUE, 0, output_size, &H[0]);
+		uint64_t p2A = prof_event2A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2A.getProfilingInfo<CL_PROFILING_COMMAND_START>();
+		////queue.enqueueReadBuffer(buffer_I, CL_TRUE, 0, output_size, &I[0]);
+
+		//// Save the results for easier reuse
 		float minVal = (float)B[0] / 100.0f;
 		float maxVal = (float)C[0] / 100.0f;
 		float atomMinVal = (float)G[0] / 100.0f;
@@ -262,6 +278,7 @@ int main(int argc, char **argv)
 
 		queue.enqueueNDRangeKernel(kernel_4, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size), NULL, &prof_event4);
 		queue.enqueueReadBuffer(buffer_E, CL_TRUE, 0, output_size, &E[0]);
+		uint64_t p4 = prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_START>();
 
 		// Pass in buffer E which has the output from the variance calculations
 		cl::Kernel kernel_5 = cl::Kernel(program, "reduce_find_sum_variance");
@@ -284,16 +301,18 @@ int main(int argc, char **argv)
 		// ================================== Printing results ================================== //
 		std::cout << "\n\n##========================== Results ==========================##\n" << std::endl;
 
-		std::cout << "Reduce Min = " << minVal  << "	|	Execution Time [ns]: " << prof_event1.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
-		std::cout << "Atomic Min = " << atomMinVal << "	|	Execution Time [ns]: " << prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		std::cout << "Reduce Min = " << minVal << "	|	Execution Time [ns]: " << p1 << std::endl;
+		std::cout << "Atomic Min = " << atomMinVal << "	|	Execution Time [ns]: " << p1A << std::endl;
 
-		std::cout << "\nReduce Max = " << maxVal  << "		|	Execution Time [ns]: " << prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_START>() << maxVal << std::endl;
-		std::cout << "Atomic Max = " << maxVal << "		|	Execution Time [ns]: " << prof_event2A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2A.getProfilingInfo<CL_PROFILING_COMMAND_START>() << maxVal << std::endl;
+		std::cout << "\nReduce Max = " << maxVal << "		|	Execution Time [ns]: " << p2 << std::endl;
+		std::cout << "Atomic Max = " << maxVal << "		|	Execution Time [ns]: " << p2A << std::endl;
 
-		std::cout << "\nMean = " << std::fixed << std::setprecision(2) << mean << "		|	Execution Time [ns]: " << prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		std::cout << "\nMean = " << std::fixed << std::setprecision(2) << mean << "		|	Execution Time [ns]: " << p3 << std::endl;
 
-		std::cout << "Variance = " << std::fixed << std::setprecision(2) << variance << "	|	Execution Time [ns]: " << prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		std::cout << "Variance = " << std::fixed << std::setprecision(2) << variance << "	|	Execution Time [ns]: " << p4 << std::endl;
 		std::cout << "\nStandard Deviation = " << std::fixed << std::setprecision(2) << stdev << std::endl;
+
+		//std::cout << "\n\nSort: " << I[0] << "  -  " << I[initalSize - 1] << std::endl;
 
 		std::system("pause");
 
