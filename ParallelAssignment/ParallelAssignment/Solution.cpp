@@ -3,8 +3,8 @@
 
 #include <iostream>
 #include <vector>
-#include <chrono>
-#include <iomanip>
+#include <chrono> // Timing the performance of the program
+#include <iomanip> // For std::setprecision() to output numbers to set number of decimal places
 
 #ifdef __APPLE__
 #include <OpenCL/cl.hpp>
@@ -26,11 +26,14 @@ vector<int>* readFile(std::string filename)
 	string string;
 	int spaceCount = 0;
 
+	// Run through each line of the file and store it as a string. 
+	// Then parse the string to get the 6th column of data and return those values
 	while (std::getline(file, string))
 	{
 		std::string tempString;
 		for (int i = 0; i < string.size(); i++)
 		{
+			// There are 6 columns of data, so after 5 spaces that is the correct column
 			if (spaceCount < 5)
 			{
 				if (string[i] == ' ')
@@ -62,16 +65,21 @@ void print_help()
 int main(int argc, char **argv)
 {
 	
-	//Part 1 - handle command line options such as device selection, verbosity, etc.
+	//Part 1 - Handle command line options such as device selection, verbosity, etc.
 	int platform_id = 0;
 	int device_id = 0;
-	std::string fileName = "temp_lincolnshire.txt";
-	std::string filePath = "C:/Users/Computing/Documents/GitHub/ParallelAssignment/ParallelAssignment/x64/Debug/";
-	filePath.append(fileName);
 
+	// Type definitions declared and grouped here to find more easily
+	typedef int mytype;
 	typedef std::chrono::steady_clock::time_point TimePoint;
 	typedef std::chrono::high_resolution_clock Clock;
 
+	// Store the filename and it's absolute path separately and append them after to read the file.
+	// This allows the filename to be displayed without the entire path, and allows either to be changed without the other being affected
+	std::string fileName = "temp_lincolnshire.txt";
+	std::string filePath = "C:/Users/Computing/Documents/GitHub/ParallelAssignment/ParallelAssignment/x64/Debug/";
+	filePath.append(fileName);
+	
 	for (int i = 1; i < argc; i++)	
 	{
 		if ((strcmp(argv[i], "-p") == 0) && (i < (argc - 1))) { platform_id = atoi(argv[++i]); }
@@ -80,13 +88,15 @@ int main(int argc, char **argv)
 		else if (strcmp(argv[i], "-h") == 0) { print_help(); }
 	}
 	
+	// Start the clock here for timing the file reading so it starts right before the reading, and ends straight after.
 	TimePoint timeStart = Clock::now();
 
-	// Host - Input
+	// Host - Read the file and save the data here, this is the input for the kernels.
 	vector<int>* data = readFile(filePath);
-
+	
+	// Stop the timer for the file reading, save the time and let the user know file reading has completed.
 	auto readTime = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - timeStart).count();
-	cout << "Reading file complete" << endl;
+	std::cout << "Reading file complete" << std::endl;
 	timeStart = Clock::now();
 
 	int initalSize = data->size();
@@ -94,14 +104,14 @@ int main(int argc, char **argv)
 	// Detect any potential exceptions
 	try 
 	{
-		//Part 2 - host operations
-		//2.1 Select computing devices
+		// Part 2 - Host operations
+		// 2.1 Select computing devices
 		cl::Context context = GetContext(platform_id, device_id);
 
-		//display the selected device
+		// Display the selected device
 		std::cout << "Running on " << GetPlatformName(platform_id) << ", " << GetDeviceName(platform_id, device_id) << std::endl;
 
-		//create a queue to which we will push commands for the device
+		// Create a queue to push commands for the device, and enable profiling events to run (for measuring performance time)
 		cl::CommandQueue queue(context, CL_QUEUE_PROFILING_ENABLE);
 
 		//2.2 Load & build the device code
@@ -111,20 +121,19 @@ int main(int argc, char **argv)
 
 		cl::Program program(context, sources);
 
-		//build and debug the kernel code
+		// Build and debug the kernel code
 		try 
 		{
 			program.build();
 		}
 		catch (const cl::Error& err) 
 		{
-			cout << "Build Status: " << program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(context.getInfo<CL_CONTEXT_DEVICES>()[0]) << endl;
-			cout << "Build Options:\t" << program.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(context.getInfo<CL_CONTEXT_DEVICES>()[0]) << endl;
-			cout << "Build Log:\t " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(context.getInfo<CL_CONTEXT_DEVICES>()[0]) << endl;
+			std::cout << "Build Status: " << program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(context.getInfo<CL_CONTEXT_DEVICES>()[0]) << std::endl;
+			std::cout << "Build Options:\t" << program.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(context.getInfo<CL_CONTEXT_DEVICES>()[0]) << std::endl;
+			std::cout << "Build Log:\t " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(context.getInfo<CL_CONTEXT_DEVICES>()[0]) << std::endl;
 			throw err;
 		}
 
-		typedef int mytype;
 
 		//Part 4 - memory allocation
 
@@ -149,10 +158,10 @@ int main(int argc, char **argv)
 		size_t input_size = data->size()*sizeof(mytype);//size in bytes
 		size_t nr_groups = input_elements / local_size;
 
-		// Host - Output
-		vector<mytype> B(input_elements);
-		size_t output_size = B.size()*sizeof(mytype);//size in bytes
-		
+		// Host - Output vectors
+		size_t output_size = input_elements*sizeof(mytype); // Size in bytes
+
+		vector<mytype> B(input_elements);		
 		vector<mytype> C(input_elements);
 		vector<mytype> D(input_elements);
 		vector<mytype> E(input_elements);
@@ -196,7 +205,7 @@ int main(int argc, char **argv)
 		kernel_2.setArg(1, buffer_C);
 		kernel_2.setArg(2, cl::Local(local_size * sizeof(mytype)));
 
-		// This is for the atomic version rather than reduce
+// ======================== Atomic Kernels ======================== //
 		cl::Kernel kernel_1A = cl::Kernel(program, "at_find_min");
 		kernel_1A.setArg(0, buffer_A);
 		kernel_1A.setArg(1, buffer_G);
@@ -206,12 +215,15 @@ int main(int argc, char **argv)
 		kernel_2A.setArg(0, buffer_A);
 		kernel_2A.setArg(1, buffer_H);
 		kernel_2A.setArg(2, cl::Local(local_size * sizeof(mytype)));
+// ======================== [END] Atomic Kernels ======================== //
 
 		cl::Kernel kernel_3 = cl::Kernel(program, "reduce_find_sum");
 		kernel_3.setArg(0, buffer_A);
 		kernel_3.setArg(1, buffer_D);
 		kernel_3.setArg(2, cl::Local(local_size * sizeof(mytype)));
 
+		// Create the profiling events that will measure the time each kernel takes to run
+		// 1A & 2A are the Atomic versions min/max, which are profile_event 1 & 2 respectively
 		cl::Event prof_event1;
 		cl::Event prof_event1A;
 		cl::Event prof_event2;
@@ -264,26 +276,26 @@ int main(int argc, char **argv)
 		float stdev = sqrt(variance);
 
 		// ================================== Printing Details ================================== //
-		cout << "\n\n##======================= Details =======================##\n" << endl;
-		cout << "Weather data file: " << fileName << endl;
-		cout << "Total data values: " << (*data).size() << endl;
-		cout << "Read file run time: " << (readTime / 1000.0f) << " seconds" << endl;
+		std::cout << "\n\n##========================== Details ==========================##\n" << std::endl;
+		std::cout << "Weather data file: " << fileName << std::endl;
+		std::cout << "Total data values: " << (*data).size() << std::endl;
+		std::cout << "Read file run time: " << (readTime / 1000.0f) << " seconds" << std::endl;
 
 		// ================================== Printing results ================================== //
-		cout << "\n\n##======================= Results =======================##\n" << endl;
+		std::cout << "\n\n##========================== Results ==========================##\n" << std::endl;
 
-		cout << "Reduce Min = " << minVal  << "	|	Execution Time [ns]: " << prof_event1.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1.getProfilingInfo<CL_PROFILING_COMMAND_START>() << endl;
-		cout << "Atomic Min = " << atomMinVal << "	|	Execution Time [ns]: " << prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_START>() << endl;
+		std::cout << "Reduce Min = " << minVal  << "	|	Execution Time [ns]: " << prof_event1.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		std::cout << "Atomic Min = " << atomMinVal << "	|	Execution Time [ns]: " << prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event1A.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
 
-		cout << "\nReduce Max = " << maxVal  << "		|	Execution Time [ns]: " << prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_START>() << maxVal << endl;
-		cout << "Atom Max = " << maxVal << "		|	Execution Time [ns]: " << prof_event2A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2A.getProfilingInfo<CL_PROFILING_COMMAND_START>() << maxVal << endl;
+		std::cout << "\nReduce Max = " << maxVal  << "		|	Execution Time [ns]: " << prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2.getProfilingInfo<CL_PROFILING_COMMAND_START>() << maxVal << std::endl;
+		std::cout << "Atomic Max = " << maxVal << "		|	Execution Time [ns]: " << prof_event2A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2A.getProfilingInfo<CL_PROFILING_COMMAND_START>() << maxVal << std::endl;
 
-		cout << "\nMean = " << std::fixed << std::setprecision(2) << mean << "		|	Execution Time [ns]: " << prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_START>() << endl;
+		std::cout << "\nMean = " << std::fixed << std::setprecision(2) << mean << "		|	Execution Time [ns]: " << prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event3.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
 
-		cout << "Variance = " << std::fixed << std::setprecision(2) << variance << "	|	Execution Time [ns]: " << prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_START>() << endl;
-		cout << "\nStandard Deviation = " << std::fixed << std::setprecision(2) << stdev << endl;
+		std::cout << "Variance = " << std::fixed << std::setprecision(2) << variance << "	|	Execution Time [ns]: " << prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		std::cout << "\nStandard Deviation = " << std::fixed << std::setprecision(2) << stdev << std::endl;
 
-		system("pause");
+		std::system("pause");
 
 	}
 	catch (cl::Error err) 
