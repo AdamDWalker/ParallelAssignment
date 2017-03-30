@@ -154,8 +154,10 @@ int main(int argc, char **argv)
 			data->insert(data->end(), A_ext.begin(), A_ext.end());
 		}
 
-		size_t input_elements = data->size();//number of input elements
-		size_t input_size = data->size()*sizeof(mytype);//size in bytes
+#pragma region Kernel Buffers
+
+		size_t input_elements = data->size(); // Number of input elements
+		size_t input_size = data->size()*sizeof(mytype); // Size in bytes
 		size_t nr_groups = input_elements / local_size;
 
 		// Host - Output vectors
@@ -181,6 +183,9 @@ int main(int argc, char **argv)
 		cl::Buffer buffer_G(context, CL_MEM_READ_WRITE, output_size);
 		cl::Buffer buffer_H(context, CL_MEM_READ_WRITE, output_size);
 
+#pragma endregion
+
+#pragma region Enqueue buffers + Create kernels
 
 		// Copy array A to and initialise other arrays on device memory
 		queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, input_size, &(*data)[0]);
@@ -222,6 +227,10 @@ int main(int argc, char **argv)
 		kernel_3.setArg(1, buffer_D);
 		kernel_3.setArg(2, cl::Local(local_size * sizeof(mytype)));
 
+#pragma endregion
+
+#pragma region Profile Events + Call Kernels
+
 		// Create the profiling events that will measure the time each kernel takes to run
 		// 1A & 2A are the Atomic versions min/max, which are profile_event 1 & 2 respectively
 		cl::Event prof_event1;
@@ -229,7 +238,8 @@ int main(int argc, char **argv)
 		cl::Event prof_event2;
 		cl::Event prof_event2A;
 		cl::Event prof_event3;
-		cl::Event prof_event4;
+		cl::Event prof_event4; // These are for the variance kernel and the summing of that set of results
+		cl::Event prof_event5; // They need to be combined to give the total time to the variance result
 
 		// Call all the kernels in sequence - Except for the mean and standard deviation which require results from these to work
 		queue.enqueueNDRangeKernel(kernel_1, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size), NULL, &prof_event1);
@@ -238,8 +248,11 @@ int main(int argc, char **argv)
 		queue.enqueueNDRangeKernel(kernel_1A, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size), NULL, &prof_event1A);
 		queue.enqueueNDRangeKernel(kernel_2A, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size), NULL, &prof_event2A);
 
+#pragma endregion
 
+#pragma region Read Buffers
 		// ================ Copy the result from device to host ================
+		// Also stop the profile timers and save the values here
 
 		// Reduce Min
 		queue.enqueueReadBuffer(buffer_B, CL_TRUE, 0, output_size, &B[0]);
@@ -262,39 +275,60 @@ int main(int argc, char **argv)
 		uint64_t p2A = prof_event2A.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event2A.getProfilingInfo<CL_PROFILING_COMMAND_START>();
 		////queue.enqueueReadBuffer(buffer_I, CL_TRUE, 0, output_size, &I[0]);
 
-		//// Save the results for easier reuse
+#pragma endregion
+
+		// ===================== Kernel Results =====================
+
 		float minVal = (float)B[0] / 100.0f;
 		float maxVal = (float)C[0] / 100.0f;
 		float atomMinVal = (float)G[0] / 100.0f;
 		float atomMaxVal = (float)H[0] / 100.0f;
 		float mean = ((float)D[0] / data->size()) / 100.0f;
 
-		// Create and call the find variance kernel now that the mean is known
+		// ===================== [END] Kernel Results =====================
+
+#pragma region Variance + Std Dev
+		
+		// This section calculates the variance and from that the standard deviation
+		// 1st create kernel_4 and give it the dataset.
+		// 2nd take the returned squared values from kernel_4 in buffer E and pass them to kernel_5 for summing
+
+		// Create new kernel. Initial size is to allow for padding protection on the X - mean calculation
 		cl::Kernel kernel_4 = cl::Kernel(program, "find_variance");
 		kernel_4.setArg(0, buffer_A);
 		kernel_4.setArg(1, buffer_E);
 		kernel_4.setArg(2, (int)(mean * 100));
 		kernel_4.setArg(3, initalSize);
 
+		// Call the kernel, then read the return buffer for results.
+		// Stop profile timer and save the value as well
 		queue.enqueueNDRangeKernel(kernel_4, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size), NULL, &prof_event4);
 		queue.enqueueReadBuffer(buffer_E, CL_TRUE, 0, output_size, &E[0]);
 		uint64_t p4 = prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event4.getProfilingInfo<CL_PROFILING_COMMAND_START>();
 
-		// Pass in buffer E which has the output from the variance calculations
+		// Create new sum kernel. This sum divides by 10k to account for the exponential growth of 100^2
 		cl::Kernel kernel_5 = cl::Kernel(program, "reduce_find_sum_variance");
 		kernel_5.setArg(0, buffer_E);
 		kernel_5.setArg(1, buffer_F);
 		kernel_5.setArg(2, cl::Local(local_size * sizeof(mytype)));
 
-		queue.enqueueNDRangeKernel(kernel_5, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size));
+		// Call the kernel and read the return buffer
+		queue.enqueueNDRangeKernel(kernel_5, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size), NULL, &prof_event5);
 		queue.enqueueReadBuffer(buffer_F, CL_TRUE, 0, output_size, &F[0]);
+		uint64_t p5 = prof_event5.getProfilingInfo<CL_PROFILING_COMMAND_END>() - prof_event5.getProfilingInfo<CL_PROFILING_COMMAND_START>();
 
+		// ========== Results ==========
 		float variance = (float)F[0] / F.size();
 		float stdev = sqrt(variance);
 
+#pragma endregion
+
+		// Get the time taken from reading the file in to now (creating and runnig kernels)
+		// Then add it to the file read time to get the total time for running the program
 		auto kernelTime = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - timeStart).count();
 		auto totalTime = kernelTime + readTime;
 
+#pragma region Console Output
 		// ================================== Printing Details ================================== //
 		std::cout << "\n\n##========================== Details ==========================##\n" << std::endl;
 		std::cout << "Weather data file: " << fileName << std::endl;
@@ -313,7 +347,7 @@ int main(int argc, char **argv)
 
 		std::cout << "\nMean = " << std::fixed << std::setprecision(2) << mean << "		|	Execution Time [ns]: " << p3 << std::endl;
 
-		std::cout << "\nVariance = " << std::fixed << std::setprecision(2) << variance << "	|	Execution Time [ns]: " << p4 << std::endl;
+		std::cout << "\nVariance = " << std::fixed << std::setprecision(2) << variance << "	|	Execution Time [ns]: " << (p4 + p5) << std::endl;
 		std::cout << "\nStandard Deviation = " << std::fixed << std::setprecision(2) << stdev << std::endl;
 
 		//std::cout << "\n\nSort: " << I[0] << "  -  " << I[initalSize - 1] << std::endl;
@@ -323,12 +357,15 @@ int main(int argc, char **argv)
 
 		std::cout << "Reduce Min	= " << GetFullProfilingInfo(prof_event1, ProfilingResolution::PROF_US) << endl;
 		std::cout << "Atomic Min	= " << GetFullProfilingInfo(prof_event1A, ProfilingResolution::PROF_US) << endl;
+
 		std::cout << "\nReduce Max	= " << GetFullProfilingInfo(prof_event2, ProfilingResolution::PROF_US) << endl;
 		std::cout << "Atomic Max	= " <<GetFullProfilingInfo(prof_event2A, ProfilingResolution::PROF_US) << endl;
+
 		std::cout << "\nMean		= " <<GetFullProfilingInfo(prof_event3, ProfilingResolution::PROF_US) << endl;
 		std::cout << "Variance	= " << GetFullProfilingInfo(prof_event4, ProfilingResolution::PROF_US) << endl;
 		std::cout << "\n" << endl;
 
+#pragma endregion
 
 		std::system("pause");
 
