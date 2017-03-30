@@ -292,11 +292,15 @@ int main(int argc, char **argv)
 		float variance = (float)F[0] / F.size();
 		float stdev = sqrt(variance);
 
+		auto kernelTime = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - timeStart).count();
+		auto totalTime = kernelTime + readTime;
+
 		// ================================== Printing Details ================================== //
 		std::cout << "\n\n##========================== Details ==========================##\n" << std::endl;
 		std::cout << "Weather data file: " << fileName << std::endl;
 		std::cout << "Total data values: " << (*data).size() << std::endl;
 		std::cout << "Read file run time: " << (readTime / 1000.0f) << " seconds" << std::endl;
+		std::cout << "Total run time: " << (totalTime / 1000.0f) << " seconds" << std::endl;
 
 		// ================================== Printing results ================================== //
 		std::cout << "\n\n##========================== Results ==========================##\n" << std::endl;
