@@ -108,7 +108,10 @@ __kernel void reduce_find_sum_variance(__global const int* A, __global int* B, _
 		barrier(CLK_LOCAL_MEM_FENCE);
 	}
 
+	// This is because the values are x 100 when read in from file to preserve data
+	// Therefore 100 ^ 2 = 10,000 which needs to be shrunk back to normal size again
 	scratch[lid] = scratch[lid] / 10000.0f;
+
 	//we add results from all local groups to the first element of the array
 	//serial operation! but works for any group size
 	//copy the cache to output array
